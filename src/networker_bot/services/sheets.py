@@ -4,6 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import gspread
 from google.oauth2.service_account import Credentials
+import json
 
 load_dotenv()
 
@@ -15,22 +16,31 @@ class SheetsService:
     """Servicio para guardar información en Google Sheets"""
     
     def __init__(self):
-        scope = [
-            'https://spreadsheets.google.com/feeds',
-            'https://www.googleapis.com/auth/drive'
-        ]
-        
-        # Asegurar que encuentra credentials.json
-        import os
-        creds_path = os.path.join(os.getcwd(), 'credentials.json')
-        if not os.path.exists(creds_path):
-            logger.error(f"❌ credentials.json no encontrado en: {creds_path}")
-            raise FileNotFoundError("credentials.json no encontrado")
-
-        creds = Credentials.from_service_account_file(creds_path, scopes=scope)
-        
-        self.client = gspread.authorize(creds)
-        self.sheet = self.client.open_by_key(GOOGLE_SHEETS_ID).sheet1
+        try:
+            # Configurar credenciales
+            scope = [
+                'https://spreadsheets.google.com/feeds',
+                'https://www.googleapis.com/auth/drive'
+            ]
+            
+            # Intentar desde archivo primero
+            if os.path.exists('credentials.json'):
+                creds = Credentials.from_service_account_file('credentials.json', scopes=scope)
+            else:
+                # Si no existe archivo, usar variable de entorno
+                creds_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
+                if creds_json:
+                    creds_dict = json.loads(creds_json)
+                    creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+                else:
+                    raise Exception("No se encontraron credenciales de Google")
+            
+            self.client = gspread.authorize(creds)
+            self.sheet = self.client.open_by_key(GOOGLE_SHEETS_ID).sheet1
+            
+        except Exception as e:
+            logger.error(f"Error al inicializar SheetsService: {e}")
+            raise
     
     async def add_row(self, row_data: list) -> bool:
         """
