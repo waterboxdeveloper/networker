@@ -1,0 +1,1 @@
+web: uv run python run_bot.py 

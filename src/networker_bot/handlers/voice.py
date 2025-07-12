@@ -10,6 +10,9 @@ from networker_bot.services.sheets import SheetsService
 
 logger = logging.getLogger(__name__)
 
+# Crear directorio temp si no existe
+os.makedirs("temp", exist_ok=True)
+
 deepgram_service = DeepgramService()
 gemini_service = GeminiService()
 sheets_service = SheetsService()
@@ -32,9 +35,6 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     try:
         # 1. Descargar el archivo de audio
         voice_file = await update.message.voice.get_file()
-        
-        # Crear directorio temporal si no existe
-        os.makedirs("temp", exist_ok=True)
         
         # Descargar archivo
         file_path = f"temp/voice_{user.id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ogg"

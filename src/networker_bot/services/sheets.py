@@ -20,9 +20,14 @@ class SheetsService:
             'https://www.googleapis.com/auth/drive'
         ]
         
-        creds = Credentials.from_service_account_file(
-            'credentials.json', scopes=scope
-        )
+        # Asegurar que encuentra credentials.json
+        import os
+        creds_path = os.path.join(os.getcwd(), 'credentials.json')
+        if not os.path.exists(creds_path):
+            logger.error(f"❌ credentials.json no encontrado en: {creds_path}")
+            raise FileNotFoundError("credentials.json no encontrado")
+
+        creds = Credentials.from_service_account_file(creds_path, scopes=scope)
         
         self.client = gspread.authorize(creds)
         self.sheet = self.client.open_by_key(GOOGLE_SHEETS_ID).sheet1
